@@ -1,0 +1,16 @@
+<configuration>
+    <property>
+            <name>dfs.namenode.name.dir</name>
+            <value>{{HADOOP_HOME}}/data/nameNode</value>
+    </property>
+
+    <property>
+            <name>dfs.datanode.data.dir</name>
+            <value>{{HADOOP_HOME}}/data/dataNode</value>
+    </property>
+
+    <property>
+            <name>dfs.replication</name>
+            <value>{{REPLICATION}}</value>
+    </property>
+</configuration>
