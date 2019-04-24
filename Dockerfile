@@ -13,43 +13,31 @@
 
 FROM openjdk:8-stretch
 
-RUN apt-get update \
-    && apt-get install -y openssh-server \
-    && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /root/
+WORKDIR /usr/local
 
 ENV VERSION=2.8.5
 
 RUN wget https://archive.apache.org/dist/hadoop/common/hadoop-$VERSION/hadoop-$VERSION.tar.gz \
     && tar -xzf hadoop-$VERSION.tar.gz \
-    && mv hadoop-$VERSION ~/hadoop \
+    && mv hadoop-$VERSION ./hadoop \
     && rm hadoop-$VERSION.tar.gz \
-    && sed -i 's;${JAVA_HOME};'"$JAVA_HOME;g" ~/hadoop/etc/hadoop/hadoop-env.sh
+    && sed -i 's;${JAVA_HOME};'"$JAVA_HOME;g" ./hadoop/etc/hadoop/hadoop-env.sh
 
-COPY ssh_config .ssh/config
+ENV HADOOP_PREFIX=/usr/local/hadoop \
+    HADOOP_COMMON_HOME=/usr/local/hadoop \
+    HADOOP_HDFS_HOME=/usr/local/hadoop \
+    HADOOP_MAPRED_HOME=/usr/local/hadoop \
+    HADOOP_YARN_HOME=/usr/local/hadoop \
+    HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop \
+    YARN_CONF_DIR=/usr/local/hadoop/etc/hadoop \
+    PATH=${PATH}:/usr/local/hadoop/bin:/usr/local/hadoop/sbin
+WORKDIR $HADOOP_PREFIX
 
-RUN mkdir -p ~/.ssh \
-    && touch ~/.ssh/authorized_keys \
-    && chmod 0600 ~/.ssh/authorized_keys
-
-ENV HADOOP_HOME=/root/hadoop
-ENV PATH="${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}"
-WORKDIR $HADOOP_HOME
-
-COPY *.tmpl ./tmpl/
-COPY *.sh ./
-
-RUN chmod +x ./*.sh
-
-ENV NODE_ROLE=master
-ENV NODE_MASTER=node-master
-ENV NODE_MASTER_PORT=9000
-ENV REPLICATION=1
-ENV MAX_MEMORY=3072
-
-EXPOSE 9000
-EXPOSE 8088
-EXPOSE 22
-
-CMD bash ./start-hadoop.sh
+# Hdfs ports
+EXPOSE 50010 50020 50070 50075 50090 8020 9000
+# Mapred ports
+EXPOSE 19888
+#Yarn ports
+EXPOSE 8030 8031 8032 8033 8040 8042 8088
+#Other ports
+EXPOSE 49707 2122
