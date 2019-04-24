@@ -1,0 +1,54 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: node-master
+spec:
+  selector:
+    matchLabels:
+      run: node-master
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: node-master
+    spec:
+      containers:
+      - name: node-master
+        image: cachengo/hadoop:latest
+        imagePullPolicy: "Always"
+        env:
+        - name: NODE_MASTER
+          value: "node-master"
+        - name: NODE_MASTER_PORT
+          value: "9000"
+        - name: NODE_ROLE
+          value: "master"
+        - name: REPLICATION
+          value: "1"
+        ports:
+        - containerPort: 8088
+        - containerPort: 22
+        - containerPort: 9000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-master
+  namespace: default
+  labels:
+    run: node-master
+spec:
+  ports:
+  - name: ui
+    port: 8088
+    nodePort: 32188
+    protocol: TCP
+  - name: ssh
+    port: 22
+    protocol: TCP
+  - name: service
+    port: 9000
+    protocol: TCP
+  selector:
+    run: node-master
+  type: NodePort

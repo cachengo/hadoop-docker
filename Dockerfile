@@ -38,7 +38,9 @@ ENV PATH="${HADOOP_HOME}/bin:${HADOOP_HOME}/sbin:${PATH}"
 WORKDIR $HADOOP_HOME
 
 COPY *.tmpl ./tmpl/
-COPY start-hadoop.sh ./start-hadoop.sh
+COPY *.sh ./
+
+RUN chmod +x ./*.sh
 
 ENV NODE_ROLE=master
 ENV NODE_MASTER=node-master

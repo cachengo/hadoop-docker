@@ -1,0 +1,46 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: node-worker1
+spec:
+  selector:
+    matchLabels:
+      run: node-worker1
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: node-worker1
+    spec:
+      containers:
+      - name: node-worker1
+        image: cachengo/hadoop:latest
+        imagePullPolicy: "Always"
+        env:
+        - name: NODE_MASTER
+          value: "node-master"
+        - name: NODE_MASTER_PORT
+          value: "9000"
+        - name: NODE_ROLE
+          value: "worker"
+        - name: REPLICATION
+          value: "1"
+        - name: MASTER_PUB_KEY
+          value: "{{MASTER_PUB_KEY}}"
+        ports:
+        - containerPort: 22
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: node-worker1
+  namespace: default
+  labels:
+    run: node-worker1
+spec:
+  ports:
+  - name: ssh
+    port: 22
+    protocol: TCP
+  selector:
+    run: node-worker1
