@@ -31,6 +31,43 @@ ENV HADOOP_PREFIX=/usr/local/hadoop \
     HADOOP_CONF_DIR=/usr/local/hadoop/etc/hadoop \
     YARN_CONF_DIR=/usr/local/hadoop/etc/hadoop \
     PATH=${PATH}:/usr/local/hadoop/bin:/usr/local/hadoop/sbin
+
+COPY protobuf-2.5.0-arm64.patch /protobuf-2.5.0-arm64.patch
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends autoconf automake libtool curl make g++ unzip patch cmake zlib1g zlib1g-dev libsnappy-dev maven pkgconf libssl1.0-dev libbz2-dev \
+    && cd / \
+    && export PROTOC_VERSION=2.5.0 \
+    && git clone https://github.com/google/protobuf.git \
+    && cd protobuf \
+    && git checkout v$PROTOC_VERSION \
+    && patch -p1 < /protobuf-2.5.0-arm64.patch \
+    && curl $curlopts -L -O https://github.com/google/googletest/archive/release-1.7.0.zip \
+    && unzip -q release-1.7.0.zip \
+    && rm release-1.7.0.zip \
+    && mv googletest-release-1.7.0 gtest \
+    && ./autogen.sh \
+    && ./configure \
+    && make \
+    && make install \
+    && export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH \
+    && echo /usr/local/lib >> /etc/ld.so.conf \
+    && ldconfig \
+    && rm -rf /protobuf \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN cd / \
+    && git clone https://github.com/apache/hadoop.git \
+    && cd hadoop \
+    && git checkout branch-$VERSION \
+    && mvn package -Pdist,native -DskipTests -Dtar -X \
+    && mkdir -p $HADOOP_PREFIX/lib/native \
+    && cp -r hadoop-dist/target/hadoop-$VERSION/lib/native/* $HADOOP_PREFIX/lib/native \
+    && cd .. \
+    && rm -rf /hadoop
+
+ENV HADOOP_OPTS="$HADOOP_OPTS -Djava.library.path=$HADOOP_PREFIX/lib/native"
+
 WORKDIR $HADOOP_PREFIX
 
 # Hdfs ports
